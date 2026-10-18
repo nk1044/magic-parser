@@ -1,0 +1,14 @@
+# Example config: a dark, ruled-notebook look.
+# Use it with:  mdp build examples/showcase.md -c examples/mdp.config.yaml
+page:
+  style: lined
+  mode: dark
+  gridSize: 28px
+  width: 720px
+font:
+  size: 18px
+features:
+  toc: true
+pdf:
+  format: Letter
+  margin: 20mm 18mm
