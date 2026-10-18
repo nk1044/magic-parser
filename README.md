@@ -8,6 +8,8 @@ npx magic-parser notes.md -f pdf     # → notes.pdf
 npx magic-parser serve notes.md      # live preview in the browser
 ```
 
+**Website:** https://nk1044.github.io/magic-parser/
+
 [![npm](https://img.shields.io/npm/v/magic-parser)](https://www.npmjs.com/package/magic-parser)
 ![node](https://img.shields.io/node/v/magic-parser)
 ![license](https://img.shields.io/npm/l/magic-parser)
@@ -65,7 +67,11 @@ node bin/mdp.js serve examples/showcase.md           # live preview while editin
 npm run example:pdf                                  # showcase as PDF
 ```
 
-The website has no build step: open `website/index.html` in a browser, or deploy the `website/` folder to any static host.
+The website has no build step: open `website/index.html` in a browser. It is hosted on GitHub Pages from the `gh-pages` branch. To deploy changes, commit them on `master`, then push the `website/` folder to that branch:
+
+```bash
+git subtree push --prefix website origin gh-pages
+```
 
 ## Releasing
 
