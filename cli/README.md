@@ -3,19 +3,22 @@
 Render Markdown into a single self-contained HTML page or a PDF, on paper you can style: grid, lined, dotted or plain, in light, dark or auto mode.
 
 ```bash
-mdp notes.md                      # → notes.html (grid paper, cream page, serif)
-mdp notes.md -f pdf               # → notes.pdf
-mdp serve notes.md                # live-reloading preview in your browser
+npx magic-parser notes.md                 # → notes.html (grid paper, cream page, serif)
+npx magic-parser notes.md -f pdf          # → notes.pdf
+npx magic-parser serve notes.md           # live-reloading preview in your browser
 ```
 
 ## Install
 
+No global install needed. Run it with `npx magic-parser …`, or add it to a project:
+
 ```bash
-npm install
-npm link            # makes `mdp` available globally (or use: node bin/mdp.js)
+npm install --save-dev magic-parser
 ```
 
-Requires Node 18+. PDF output uses a Chromium-based browser that's already installed (Chrome, Chromium, Edge, Brave, Arc or Vivaldi) and finds it automatically.
+Inside the project you can then use either command name, `magic-parser` or its short alias `mdp`, from npm scripts or `npx mdp …`. The examples below use `mdp`.
+
+You need Node 18 or newer. PDF output drives a Chromium-based browser you already have (Chrome, Chromium, Edge, Brave, Arc or Vivaldi) and finds it automatically, so no browser download is needed.
 
 ## What it renders
 
@@ -137,6 +140,25 @@ mdp serve <input> [-p 4321] [--host localhost] [--no-open] [same styling flags]
 mdp init [--format yaml|json] [--force]
 mdp config [input] [same flags]       print the resolved config
 ```
+
+## Library API
+
+```js
+import { convertFile, renderToHtml } from 'magic-parser';
+
+// File → file (HTML or PDF), using the same config layers as the CLI
+const { output, warnings } = await convertFile('notes.md', {
+  format: 'pdf',
+  config: { page: { style: 'lined', mode: 'dark' } },
+});
+
+// String → complete HTML page (front matter supported)
+const { html, title } = renderToHtml('# Hello\n\nSome $E = mc^2$ math.', {
+  config: { page: { style: 'dotted' } },
+});
+```
+
+`loadDocument`, `parseDocument`, `renderDocument`, `resolveConfig` and `DEFAULTS` are also exported for finer control.
 
 ## Notes
 

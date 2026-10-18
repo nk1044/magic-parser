@@ -1,4 +1,5 @@
 node_modules/
-examples/out/
+cli/examples/out/
+*.tgz
 *.log
 .DS_Store

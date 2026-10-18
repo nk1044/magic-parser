@@ -154,20 +154,28 @@ const TOGGLE_BUTTON = `<button class="theme-toggle" type="button" aria-label="To
 /**
  * Parse a Markdown file with front matter and resolve its configuration.
  */
-export function loadDocument(inputPath, { configPath = null, discover = true, cli = {} } = {}) {
+export function loadDocument(inputPath, options = {}) {
   const abs = path.resolve(inputPath);
   if (!fs.existsSync(abs)) throw new Error(`Input file not found: ${inputPath}`);
-  const raw = fs.readFileSync(abs, 'utf8');
+  return parseDocument(fs.readFileSync(abs, 'utf8'), { ...options, path: abs });
+}
+
+/**
+ * Parse Markdown source (with optional front matter) and resolve its config.
+ * `path` is where the document notionally lives: relative images and config
+ * discovery are resolved from its directory.
+ */
+export function parseDocument(raw, { path: docPath = path.resolve('document.md'), configPath = null, discover = true, cli = {} } = {}) {
   let parsed;
   try {
     parsed = matter(raw);
   } catch (err) {
-    throw new Error(`Invalid front matter in ${inputPath}: ${err.message}`);
+    throw new Error(`Invalid front matter in ${docPath}: ${err.message}`);
   }
   const { mdp, title, description, lang, ...rest } = parsed.data ?? {};
   const frontMatter = merge({ meta: { title, description, lang } }, mdp ?? {});
-  const resolved = resolveConfig({ configPath, discover, cwd: path.dirname(abs), frontMatter, cli });
-  return { path: abs, source: parsed.content, data: rest, ...resolved };
+  const resolved = resolveConfig({ configPath, discover, cwd: path.dirname(docPath), frontMatter, cli });
+  return { path: docPath, source: parsed.content, data: rest, ...resolved };
 }
 
 /**

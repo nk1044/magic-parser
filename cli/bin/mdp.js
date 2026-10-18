@@ -169,7 +169,7 @@ ${yaml.dump(DEFAULTS, { lineWidth: 120, quotingType: '"' })}`;
 
 const program = new Command();
 program
-  .name('mdp')
+  .name('magic-parser')
   .description('Render Markdown into a beautiful self-contained HTML page or PDF.')
   .version(pkg.version);
 

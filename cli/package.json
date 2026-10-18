@@ -1,11 +1,39 @@
 {
   "name": "magic-parser",
   "version": "0.1.0",
-  "description": "Render Markdown into beautiful self-contained HTML or PDF, with themable paper styles.",
+  "description": "Render Markdown into beautiful self-contained HTML or PDF on grid, lined or dotted paper. Math, code, diagrams, callouts and more.",
+  "keywords": [
+    "markdown",
+    "md",
+    "html",
+    "pdf",
+    "cli",
+    "converter",
+    "katex",
+    "math",
+    "mermaid",
+    "highlight",
+    "gfm",
+    "markdown-to-html",
+    "markdown-to-pdf"
+  ],
+  "license": "MIT",
   "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
   "bin": {
+    "magic-parser": "bin/mdp.js",
     "mdp": "bin/mdp.js"
   },
+  "files": [
+    "bin",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
   "engines": {
     "node": ">=18"
   },
@@ -13,7 +41,6 @@
     "example": "node bin/mdp.js build examples/showcase.md -o examples/out/showcase.html",
     "example:pdf": "node bin/mdp.js build examples/showcase.md -f pdf -o examples/out/showcase.pdf"
   },
-  "license": "MIT",
   "dependencies": {
     "@vscode/markdown-it-katex": "^1.1.2",
     "commander": "^15.0.0",
