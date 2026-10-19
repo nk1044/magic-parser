@@ -121,6 +121,38 @@ function outputPathFor(input, config, { output, outDir }, multiple) {
   return path.join(dir, path.basename(input, path.extname(input)) + ext);
 }
 
+const isDirectory = (p) => fs.existsSync(p) && fs.statSync(p).isDirectory();
+
+/** Build a folder of Markdown into a multi-page site with a sidebar. */
+async function buildFolder(input, opts, cmd, load, log, multiple) {
+  const started = performance.now();
+  if (cmd.getOptionValueSource('format') === 'cli' && opts.format === 'pdf') {
+    throw new Error('folders build to an HTML site only; PDF output takes a single file.');
+  }
+  if (opts.output && multiple) throw new Error('--output can only be used with a single input; use --out-dir instead.');
+  const name = path.basename(path.resolve(input));
+  const outDir = opts.output
+    ? path.resolve(opts.output)
+    : opts.outDir
+      ? path.resolve(opts.outDir, multiple ? name : '.')
+      : path.resolve(`${name}-site`);
+  // --title names the site; each page keeps its own title.
+  const { meta: { title, ...meta } = {}, ...cli } = load.cli;
+  const { buildSite } = await import('../src/site.js');
+  const site = buildSite(input, {
+    outDir,
+    configPath: load.configPath,
+    discover: load.discover,
+    cli: Object.keys(meta).length ? { ...cli, meta } : cli,
+    title,
+  });
+  for (const w of site.warnings) console.warn(`warning: ${w}`);
+  const ms = (performance.now() - started).toFixed(0);
+  const count = `${site.pages.length} page${site.pages.length === 1 ? '' : 's'}`;
+  log(`✓ ${path.relative(process.cwd(), site.index) || site.index}  (${count}, ${ms} ms)`);
+  if (resolveConfig({ ...load, cwd: path.resolve(input) }).config.output.open) openFile(site.index);
+}
+
 async function build(inputs, _opts, cmd) {
   const opts = cmd.opts();
   const log = opts.quiet ? () => {} : (m) => console.log(m);
@@ -130,6 +162,10 @@ async function build(inputs, _opts, cmd) {
   for (const input of inputs) {
     const started = performance.now();
     try {
+      if (isDirectory(input)) {
+        await buildFolder(input, opts, cmd, load, log, inputs.length > 1);
+        continue;
+      }
       const doc = loadDocument(input, load);
       if (doc.configFile) log(`config: ${path.relative(process.cwd(), doc.configFile) || doc.configFile}`);
       const { config } = doc;
@@ -176,9 +212,9 @@ program
 addRenderOptions(
   program
     .command('build', { isDefault: true })
-    .description('render markdown file(s) to HTML or PDF')
-    .argument('<input...>', 'markdown file(s)')
-    .option('-o, --output <file>', 'output file (single input)')
+    .description('render markdown file(s) to HTML or PDF, or a folder to a multi-page HTML site')
+    .argument('<input...>', 'markdown file(s), or folder(s) to build as a site')
+    .option('-o, --output <file>', 'output file (single input); for a folder, the site directory')
     .option('-d, --out-dir <dir>', 'output directory (multiple inputs)')
     .addOption(new Option('-f, --format <format>', 'output format').choices(ENUMS['output.format']))
     .option('--no-embed', "don't inline local images / fonts; link them instead")

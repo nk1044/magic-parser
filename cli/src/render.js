@@ -22,16 +22,23 @@ const IMAGE_MIME = {
   '.ico': 'image/x-icon',
 };
 
-const escapeHtml = (s) =>
+export const escapeHtml = (s) =>
   String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
 let katexCssCache = null;
-function katexCss(selfContained) {
+function katexCss(selfContained, href) {
   const cssPath = require.resolve('katex/dist/katex.min.css');
   if (!selfContained) {
     const { version } = JSON.parse(fs.readFileSync(path.join(path.dirname(cssPath), '..', 'package.json'), 'utf8'));
     return { link: `https://cdn.jsdelivr.net/npm/katex@${version}/dist/katex.min.css` };
   }
+  if (href) return { link: href };
+  return { inline: katexStylesheet() };
+}
+
+/** KaTeX CSS with its woff2 fonts inlined, so it works offline. */
+export function katexStylesheet() {
+  const cssPath = require.resolve('katex/dist/katex.min.css');
   if (!katexCssCache) {
     const fontsDir = path.join(path.dirname(cssPath), 'fonts');
     // Keep only the woff2 source for each font and inline it.
@@ -42,7 +49,7 @@ function katexCss(selfContained) {
         return `src:url(data:font/woff2;base64,${data}) format("woff2")`;
       });
   }
-  return { inline: katexCssCache };
+  return katexCssCache;
 }
 
 /**
@@ -186,15 +193,25 @@ export function parseDocument(raw, { path: docPath = path.resolve('document.md')
  * @param {string} opts.outDir directory the HTML will live in (for relative links)
  * @param {string} [opts.extraHead] injected before </head> (used by the dev server)
  * @param {boolean} [opts.forPdf]
+ * @param {string} [opts.extraCss] stylesheet added after the theme, before custom CSS
+ * @param {string} [opts.before] HTML placed at the start of <body> (e.g. a site sidebar)
+ * @param {string} [opts.after] HTML placed at the end of <main> (e.g. prev/next links)
+ * @param {string|null} [opts.katexHref] link this shared KaTeX stylesheet instead of inlining it
+ * @param {(html: string) => string} [opts.transformBody] post-process the rendered body
+ * @param {string} [opts.titleSuffix] appended to <title>, e.g. " · My docs"
  */
-export function renderDocument(doc, { imageMode, outDir, extraHead = '', forPdf = false }) {
+export function renderDocument(
+  doc,
+  { imageMode, outDir, extraHead = '', forPdf = false, extraCss = '', before = '', after = '', katexHref = null, transformBody, titleSuffix = '' },
+) {
   const { config } = doc;
   const warnings = [...doc.warnings];
   const warn = (m) => warnings.push(m);
   const baseDir = path.dirname(doc.path);
 
   const { html: body0, headings, hasMath, hasMermaid } = renderMarkdown(doc.source, config);
-  const body = processImages(body0, { baseDir, outDir, mode: imageMode, warn });
+  let body = processImages(body0, { baseDir, outDir, mode: imageMode, warn });
+  if (transformBody) body = transformBody(body);
 
   // heading text is already escaped by the markdown renderer
   const title =
@@ -212,10 +229,11 @@ export function renderDocument(doc, { imageMode, outDir, extraHead = '', forPdf 
   const head = [];
   head.push(googleFontsLink(config.font.googleFonts));
   if (hasMath) {
-    const k = katexCss(config.output.selfContained);
+    const k = katexCss(config.output.selfContained, katexHref);
     head.push(k.inline ? `<style>${k.inline}</style>` : `<link rel="stylesheet" href="${k.link}">`);
   }
   head.push(`<style>${buildCss(config)}</style>`);
+  if (extraCss) head.push(`<style>${extraCss}</style>`);
   if (forPdf) head.push(`<style>${buildPdfCss(config)}</style>`);
   if (customCss) head.push(`<style>/* custom */\n${customCss}</style>`);
 
@@ -232,16 +250,16 @@ export function renderDocument(doc, { imageMode, outDir, extraHead = '', forPdf 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="generator" content="magic-parser">
-${metaDescription}<title>${title}</title>
+${metaDescription}<title>${title}${escapeHtml(titleSuffix)}</title>
 ${forPdf ? '' : THEME_BOOT(config.page.mode)}
 ${head.filter(Boolean).join('\n')}
 ${extraHead}
 </head>
 <body>
-${showToggle ? TOGGLE_BUTTON : ''}
+${before}${showToggle ? TOGGLE_BUTTON : ''}
 <main class="page">
 ${body}
-</main>
+${after}</main>
 ${UI_SCRIPT({ themeToggle: showToggle, copyButtons: f.copyButtons && !forPdf })}
 ${hasMermaid ? MERMAID_SCRIPT : ''}
 </body>

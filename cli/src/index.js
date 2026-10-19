@@ -2,8 +2,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { DEFAULTS, resolveConfig, merge } from './config.js';
 import { loadDocument, parseDocument, renderDocument } from './render.js';
+import { buildSite } from './site.js';
 
-export { DEFAULTS, resolveConfig, loadDocument, parseDocument, renderDocument };
+export { DEFAULTS, resolveConfig, loadDocument, parseDocument, renderDocument, buildSite };
 
 /**
  * Convert a Markdown file to HTML or PDF on disk.
