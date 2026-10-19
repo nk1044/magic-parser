@@ -6,6 +6,7 @@ Render Markdown into a single self-contained HTML page or a PDF, on paper you ca
 npx magic-parser notes.md                 # → notes.html (grid paper, cream page, serif)
 npx magic-parser notes.md -f pdf          # → notes.pdf
 npx magic-parser serve notes.md           # live-reloading preview in your browser
+npx magic-parser serve docs/              # …of a whole folder as a site
 npx magic-parser docs/                    # → docs-site/, a multi-page site with a sidebar
 ```
 
@@ -43,7 +44,7 @@ Everything in CommonMark + GFM, plus the common extensions:
 | Front matter | YAML `---` block (`title`, `description`, `lang`, `mdp:` overrides) |
 | Table of contents | `[[toc]]` anywhere, or `--toc` |
 
-See [examples/showcase.md](examples/showcase.md) for all of it on one page, or [examples/docs](examples/docs) for an example docs site with one page per feature, each showing the Markdown and its result. Build it with `npm run example:site`.
+See [examples/showcase.md](examples/showcase.md) for all of it on one page, or [examples/docs](examples/docs) for an example docs site with one page per feature, each showing the Markdown and its result. Build it with `mdp examples/docs`, or preview it with `mdp serve examples/docs`.
 
 ## Documentation sites
 
@@ -159,8 +160,9 @@ mdp build <input...> [options]       (the default command, so `mdp file.md` work
   --set <key=value...>      any config key, e.g. --set page.gridSize=32px features.emoji=false
 
 mdp serve <input> [-p 4321] [--host localhost] [--no-open] [same styling flags]
+                                      a file, or a folder previewed as a site
 mdp init [--format yaml|json] [--force]
-mdp config [input] [same flags]       print the resolved config
+mdp config [input] [same flags]       print the resolved config for a file or folder
 ```
 
 ## Library API

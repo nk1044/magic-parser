@@ -203,10 +203,11 @@ function landingMarkdown(tree, siteTitle) {
  * @param {boolean} [opts.discover=true]
  * @param {object} [opts.cli] config overrides
  * @param {string} [opts.title] site title (default: the folder name)
+ * @param {string} [opts.extraHead] injected before </head> on every page (used by the dev server)
  * @param {(page: object) => void} [opts.onPage] called after each page is written
  * @returns {{ outDir: string, index: string, pages: object[], warnings: string[] }}
  */
-export function buildSite(inputDir, { outDir, configPath = null, discover = true, cli = {}, title, onPage } = {}) {
+export function buildSite(inputDir, { outDir, configPath = null, discover = true, cli = {}, title, extraHead = '', onPage } = {}) {
   const root = path.resolve(inputDir);
   if (!fs.existsSync(root) || !fs.statSync(root).isDirectory()) throw new Error(`Not a folder: ${inputDir}`);
   const out = path.resolve(outDir);
@@ -246,7 +247,7 @@ export function buildSite(inputDir, { outDir, configPath = null, discover = true
     const result = renderDocument(doc, {
       imageMode: doc.config.output.selfContained ? 'embed' : 'link',
       outDir: path.dirname(outFile),
-      extraHead: SITE_BOOT,
+      extraHead: SITE_BOOT + extraHead,
       extraCss: css,
       before: renderSidebar(tree, page.out, siteTitle),
       after: i === -1 ? renderPager(null, pages[0], page.out) : renderPager(pages[i - 1] ?? home, pages[i + 1], page.out),

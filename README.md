@@ -5,7 +5,7 @@ Turn any Markdown file into a single self-contained web page or a print-ready PD
 ```bash
 npx magic-parser notes.md            # → notes.html
 npx magic-parser notes.md -f pdf     # → notes.pdf
-npx magic-parser serve notes.md      # live preview in the browser
+npx magic-parser serve notes.md      # live preview in the browser (a file or a folder)
 npx magic-parser docs/               # → docs-site/, a docs website with a sidebar
 ```
 
@@ -68,14 +68,17 @@ cd cli
 npm install
 node bin/mdp.js examples/showcase.md --open          # build the showcase page
 node bin/mdp.js serve examples/showcase.md           # live preview while editing
-npm run example:site                                 # example docs site → examples/out/docs
+node bin/mdp.js examples/docs -o examples/out/docs   # the example docs site
+node bin/mdp.js serve examples/docs                  # preview it while editing
 npm run example:pdf                                  # showcase as PDF
 ```
 
 The website is static: open `website/index.html` in a browser. Its live examples in `website/examples/` (the showcase page and the example docs site) are built from `cli/examples`. Rebuild them after changing the examples or the renderer:
 
 ```bash
-cd cli && npm run website:examples
+cd cli
+node bin/mdp.js examples/showcase.md -o ../website/examples/showcase.html
+node bin/mdp.js examples/docs -o ../website/examples/docs --title "magic-parser docs"
 ```
 
 It is hosted on GitHub Pages from the `gh-pages` branch. To deploy changes, commit them on `master`, then push the `website/` folder to that branch:

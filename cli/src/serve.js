@@ -1,7 +1,9 @@
 import fs from 'node:fs';
 import http from 'node:http';
+import os from 'node:os';
 import path from 'node:path';
-import { loadDocument, renderDocument } from './render.js';
+import { merge } from './config.js';
+import { loadDocument, renderDocument, escapeHtml } from './render.js';
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -35,14 +37,70 @@ const RELOAD_CLIENT = `<script>
 })();
 </script>`;
 
+const errorPage = (message) => `<!doctype html><meta charset="utf-8"><title>Error</title>${RELOAD_CLIENT}
+<pre style="font:14px/1.5 monospace;padding:24px;color:#b3261e;white-space:pre-wrap">${escapeHtml(message)}</pre>`;
+
+/** Live-reload event stream shared by the file and folder servers. */
+function reloadHub() {
+  const clients = new Set();
+  return {
+    handle(req, res) {
+      res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' });
+      res.write(': connected\n\n');
+      clients.add(res);
+      req.on('close', () => clients.delete(res));
+    },
+    reload() {
+      for (const res of clients) res.write('data: reload\n\n');
+    },
+  };
+}
+
+/** Resolve a URL path to a file inside `root` (a folder maps to its index.html), or null. */
+function fileIn(root, pathname) {
+  let rel;
+  try {
+    rel = decodeURIComponent(pathname);
+  } catch {
+    return null;
+  }
+  let file = path.resolve(root, '.' + rel);
+  if (file !== root && !file.startsWith(root + path.sep)) return null;
+  if (fs.existsSync(file) && fs.statSync(file).isDirectory()) file = path.join(file, 'index.html');
+  return fs.existsSync(file) && fs.statSync(file).isFile() ? file : null;
+}
+
+function sendFile(res, file) {
+  res.writeHead(200, { 'Content-Type': MIME[path.extname(file).toLowerCase()] ?? 'application/octet-stream', 'Cache-Control': 'no-store' });
+  fs.createReadStream(file).pipe(res);
+}
+
+/** Listen on `port`, moving to the next free port if it is taken. */
+function listen(server, { port, host, onListening }) {
+  let attempts = 0;
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE' && attempts < 20) {
+      attempts++;
+      server.listen(++port, host);
+    } else throw err;
+  });
+  server.on('listening', () => onListening(`http://${host}:${port}/`));
+  server.listen(port, host);
+  return server;
+}
+
 /**
  * Serve a rendered Markdown file with live reload. Files next to the Markdown
  * (images, etc.) are served from the same directory.
  */
-export function serve(inputPath, { port = 4321, host = 'localhost', configPath, discover, cli, onReady, log }) {
+export function serve(inputPath, options) {
+  return fs.statSync(path.resolve(inputPath)).isDirectory() ? serveSite(inputPath, options) : serveFile(inputPath, options);
+}
+
+function serveFile(inputPath, { port = 4321, host = 'localhost', configPath, discover, cli, onReady, log }) {
   const absInput = path.resolve(inputPath);
   const root = path.dirname(absInput);
-  const clients = new Set();
+  const hub = reloadHub();
 
   let watched = [];
   function render() {
@@ -69,7 +127,7 @@ export function serve(inputPath, { port = 4321, host = 'localhost', configPath, 
         clearTimeout(timer);
         timer = setTimeout(() => {
           log(`changed: ${path.relative(process.cwd(), f)}`);
-          for (const res of clients) res.write('data: reload\n\n');
+          hub.reload();
         }, 60);
       }),
     );
@@ -78,20 +136,13 @@ export function serve(inputPath, { port = 4321, host = 'localhost', configPath, 
 
   const server = http.createServer((req, res) => {
     const url = new URL(req.url, 'http://x');
-    if (url.pathname === '/__mdp/events') {
-      res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' });
-      res.write(': connected\n\n');
-      clients.add(res);
-      req.on('close', () => clients.delete(res));
-      return;
-    }
+    if (url.pathname === '/__mdp/events') return hub.handle(req, res);
     if (url.pathname === '/' || url.pathname === '/index.html') {
       let html;
       try {
         html = render();
       } catch (err) {
-        html = `<!doctype html><meta charset="utf-8"><title>Error</title>${RELOAD_CLIENT}
-<pre style="font:14px/1.5 monospace;padding:24px;color:#b3261e;white-space:pre-wrap">${String(err.message).replace(/</g, '&lt;')}</pre>`;
+        html = errorPage(err.message);
         log(`error: ${err.message}`);
       }
       res.writeHead(200, { 'Content-Type': MIME['.html'], 'Cache-Control': 'no-store' });
@@ -99,37 +150,116 @@ export function serve(inputPath, { port = 4321, host = 'localhost', configPath, 
       return;
     }
     // Static files from the document's directory, without escaping it.
-    let rel;
-    try {
-      rel = decodeURIComponent(url.pathname);
-    } catch {
-      res.writeHead(400).end();
-      return;
-    }
-    const file = path.resolve(root, '.' + rel);
-    if (!file.startsWith(root + path.sep) || !fs.existsSync(file) || !fs.statSync(file).isFile()) {
+    const file = fileIn(root, url.pathname);
+    if (!file) {
       res.writeHead(404, { 'Content-Type': 'text/plain' }).end('Not found');
       return;
     }
-    res.writeHead(200, { 'Content-Type': MIME[path.extname(file).toLowerCase()] ?? 'application/octet-stream' });
-    fs.createReadStream(file).pipe(res);
+    sendFile(res, file);
   });
 
-  let attempts = 0;
-  server.on('error', (err) => {
-    if (err.code === 'EADDRINUSE' && attempts < 20) {
-      attempts++;
-      server.listen(++port, host);
-    } else throw err;
+  return listen(server, {
+    port,
+    host,
+    onListening(url) {
+      try {
+        render(); // validate and start watching before the first request
+      } catch (err) {
+        log(`error: ${err.message}`);
+      }
+      onReady(url);
+    },
   });
-  server.on('listening', () => {
+}
+
+/** Watch a folder tree, using one recursive watcher where the platform supports it. */
+function watchTree(root, onChange) {
+  const skip = (rel) => rel.split(/[\\/]/).some((part) => part.startsWith('.') || part === 'node_modules');
+  try {
+    const w = fs.watch(root, { recursive: true }, (_e, name) => name && !skip(name.toString()) && onChange(name.toString()));
+    return () => w.close();
+  } catch {
+    // Older Node on Linux has no recursive watching: watch every folder instead.
+    const watchers = [];
+    (function add(dir) {
+      watchers.push(fs.watch(dir, (_e, name) => name && onChange(path.relative(root, path.join(dir, name.toString())))));
+      for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+        if (e.isDirectory() && !skip(e.name)) add(path.join(dir, e.name));
+      }
+    })(root);
+    return () => watchers.forEach((w) => w.close());
+  }
+}
+
+/**
+ * Serve a folder as a docs site with live reload. The site is built into a
+ * temporary folder and rebuilt whenever anything in the source folder changes.
+ * Other files in the source folder (PDFs, downloads, ...) are served as they are.
+ */
+async function serveSite(inputPath, { port = 4321, host = 'localhost', configPath, discover, cli, title, onReady, log }) {
+  const { buildSite } = await import('./site.js');
+  const root = path.resolve(inputPath);
+  const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mdp-site-'));
+  const hub = reloadHub();
+  let error = null;
+
+  function build() {
     try {
-      render(); // validate and start watching before the first request
+      fs.rmSync(outDir, { recursive: true, force: true });
+      const site = buildSite(root, {
+        outDir,
+        configPath,
+        discover,
+        // Embed images: the built pages live in a temporary folder.
+        cli: merge(cli, { output: { selfContained: true } }),
+        title,
+        extraHead: RELOAD_CLIENT,
+      });
+      for (const w of site.warnings) log(`warning: ${w}`);
+      error = null;
+      return site;
     } catch (err) {
+      error = err.message;
       log(`error: ${err.message}`);
+      return null;
     }
-    onReady(`http://${host}:${port}/`);
+  }
+
+  let timer;
+  const stopWatching = watchTree(root, (rel) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      log(`changed: ${rel}`);
+      build();
+      hub.reload();
+    }, 100);
   });
-  server.listen(port, host);
-  return server;
+
+  const cleanup = () => {
+    stopWatching();
+    fs.rmSync(outDir, { recursive: true, force: true });
+  };
+  process.once('exit', cleanup);
+  for (const sig of ['SIGINT', 'SIGTERM']) process.once(sig, () => process.exit(130));
+
+  const server = http.createServer((req, res) => {
+    const url = new URL(req.url, 'http://x');
+    if (url.pathname === '/__mdp/events') return hub.handle(req, res);
+    if (error) {
+      res.writeHead(500, { 'Content-Type': MIME['.html'], 'Cache-Control': 'no-store' });
+      res.end(errorPage(error));
+      return;
+    }
+    const file = fileIn(outDir, url.pathname) ?? fileIn(root, url.pathname);
+    if (!file) {
+      res.writeHead(404, { 'Content-Type': 'text/plain' }).end('Not found');
+      return;
+    }
+    sendFile(res, file);
+  });
+  server.on('close', cleanup);
+
+  const site = build();
+  if (site) log(`built ${site.pages.length} page${site.pages.length === 1 ? '' : 's'}`);
+  return listen(server, { port, host, onListening: onReady });
 }

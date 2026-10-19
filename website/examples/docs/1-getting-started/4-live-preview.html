@@ -619,14 +619,17 @@ try { if (localStorage.getItem('mdp-sidebar') === 'closed') document.documentEle
 </button>
 <main class="page">
 <h1 id="live-preview">Live preview <a class="header-anchor" href="#live-preview" aria-hidden="true">#</a></h1>
+<p><code>serve</code> takes a file or a folder, like <code>build</code>:</p>
 <pre class="code-block" data-lang="bash"><span class="code-lang">bash</span><code class="hljs language-bash">mdp serve notes.md            <span class="hljs-comment"># http://localhost:4321, opens your browser</span>
+mdp serve docs/               <span class="hljs-comment"># the whole folder as a docs site</span>
 mdp serve notes.md -p 8080 --no-open
 </code></pre>
-<p>The page reloads every time you save the Markdown file, its config file or its custom CSS, and keeps your scroll position. Images next to the file are served too.</p>
+<p>For a file, the page reloads every time you save the Markdown file, its config file or its custom CSS, and keeps your scroll position. Images next to the file are served too.</p>
+<p>For a folder, the site is rebuilt whenever anything in the folder changes, including new, renamed and deleted files, and the open page reloads. Other files in the folder, such as PDFs or downloads, are served as they are. Nothing is written to the folder: the site is built in a temporary folder that is removed when you stop the server.</p>
 <p>All the styling flags work here as well:</p>
 <pre class="code-block" data-lang="bash"><span class="code-lang">bash</span><code class="hljs language-bash">mdp serve notes.md -s dotted -m dark --toc
 </code></pre>
-<div class="markdown-alert markdown-alert-note"><p class="markdown-alert-title"><svg class="octicon octicon-info mr-2" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>Note</p><p><code>serve</code> previews one file at a time.</p>
+<div class="markdown-alert markdown-alert-note"><p class="markdown-alert-title"><svg class="octicon octicon-info mr-2" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>Note</p><p>Every page is rebuilt on each change, which takes well under a second for a site of a few dozen pages.</p>
 </div>
 
 <nav class="pager" aria-label="Pages"><a class="pager-prev" href="3-docs-sites.html"><span>Previous</span>Documentation sites</a><a class="pager-next" href="../2-writing/index.html"><span>Next</span>Writing</a></nav>

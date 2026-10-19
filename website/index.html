@@ -457,7 +457,7 @@ Shipped the <span class="m">**parser**</span>, finally.<br>
       <div class="feature"><div class="ico">&lt;/&gt;</div><h3>Inline HTML</h3><p>Raw HTML passes straight through: <code>&lt;kbd&gt;</code>, <code>&lt;details&gt;</code>, anything.</p></div>
       <div class="feature"><div class="ico">≡</div><h3>Table of contents</h3><p>Drop <code>[[toc]]</code> anywhere, or pass <code>--toc</code>.</p></div>
       <div class="feature"><div class="ico">PDF</div><h3>Full-bleed PDFs</h3><p>The paper pattern runs edge to edge on every page, with page numbers. Uses the Chrome, Edge or Brave you already have installed.</p></div>
-      <div class="feature"><div class="ico">↻</div><h3>Live preview</h3><p><code>magic-parser serve</code> reloads on every save and keeps your scroll position.</p></div>
+      <div class="feature"><div class="ico">↻</div><h3>Live preview</h3><p><code>magic-parser serve</code> reloads on every save, for a single file or a whole folder.</p></div>
       <div class="feature"><div class="ico">1</div><h3>One file</h3><p>Images and fonts are inlined, so you can email the HTML, host it, or open it offline.</p></div>
       <div class="feature"><div class="ico">▤</div><h3>Docs sites</h3><p>Point it at a folder to get a multi-page site with a sidebar that mirrors the folder tree.</p></div>
       <div class="feature"><div class="ico">#</div><h3>Heading anchors</h3><p>Every heading gets an id and a hover permalink, so you can link straight to a section.</p></div>
@@ -592,8 +592,8 @@ npx magic-parser docs/*.md <span class="k">-d</span> dist
 <span class="c"># A whole folder as a docs site</span>
 npx magic-parser docs/ <span class="k">-o</span> public <span class="k">--title</span> <span class="s">"Acme"</span>
 
-<span class="c"># Live preview while you write</span>
-npx magic-parser serve notes.md
+<span class="c"># Live preview of a file or a folder</span>
+npx magic-parser serve docs/
 
 <span class="c"># Start a config file</span>
 npx magic-parser init</pre>

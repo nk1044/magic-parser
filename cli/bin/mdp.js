@@ -123,6 +123,17 @@ function outputPathFor(input, config, { output, outDir }, multiple) {
 
 const isDirectory = (p) => fs.existsSync(p) && fs.statSync(p).isDirectory();
 
+/** Options for a folder build: --title names the site, and each page keeps its own title. */
+function siteOptions(load) {
+  const { meta: { title, ...meta } = {}, ...cli } = load.cli;
+  return {
+    configPath: load.configPath,
+    discover: load.discover,
+    cli: Object.keys(meta).length ? { ...cli, meta } : cli,
+    title,
+  };
+}
+
 /** Build a folder of Markdown into a multi-page site with a sidebar. */
 async function buildFolder(input, opts, cmd, load, log, multiple) {
   const started = performance.now();
@@ -136,16 +147,8 @@ async function buildFolder(input, opts, cmd, load, log, multiple) {
     : opts.outDir
       ? path.resolve(opts.outDir, multiple ? name : '.')
       : path.resolve(`${name}-site`);
-  // --title names the site; each page keeps its own title.
-  const { meta: { title, ...meta } = {}, ...cli } = load.cli;
   const { buildSite } = await import('../src/site.js');
-  const site = buildSite(input, {
-    outDir,
-    configPath: load.configPath,
-    discover: load.discover,
-    cli: Object.keys(meta).length ? { ...cli, meta } : cli,
-    title,
-  });
+  const site = buildSite(input, { outDir, ...siteOptions(load) });
   for (const w of site.warnings) console.warn(`warning: ${w}`);
   const ms = (performance.now() - started).toFixed(0);
   const count = `${site.pages.length} page${site.pages.length === 1 ? '' : 's'}`;
@@ -206,7 +209,7 @@ ${yaml.dump(DEFAULTS, { lineWidth: 120, quotingType: '"' })}`;
 const program = new Command();
 program
   .name('magic-parser')
-  .description('Render Markdown into a beautiful self-contained HTML page or PDF.')
+  .description('Render a Markdown file into a self-contained HTML page or PDF, or a folder into a docs site.')
   .version(pkg.version);
 
 addRenderOptions(
@@ -230,8 +233,8 @@ addRenderOptions(
   program
     .command('serve')
     .alias('preview')
-    .description('preview a markdown file in the browser with live reload')
-    .argument('<input>', 'markdown file')
+    .description('preview a markdown file, or a folder as a site, in the browser with live reload')
+    .argument('<input>', 'markdown file or folder')
     .option('-p, --port <port>', 'port', Number, 4321)
     .option('--host <host>', 'host', 'localhost')
     .option('--no-open', "don't open the browser"),
@@ -239,10 +242,11 @@ addRenderOptions(
   const { serve } = await import('../src/serve.js');
   const load = loadOptions(cmd);
   const log = opts.quiet ? () => {} : (m) => console.log(m);
-  serve(input, {
+  if (!fs.existsSync(input)) throw new Error(`Input not found: ${input}`);
+  await serve(input, {
     port: opts.port,
     host: opts.host,
-    ...load,
+    ...(isDirectory(input) ? siteOptions(load) : load),
     log,
     onReady(url) {
       console.log(`Serving ${input} at ${url}  (Ctrl+C to stop)`);
@@ -271,10 +275,15 @@ addRenderOptions(
   program
     .command('config')
     .description('print the fully resolved config (after file, front matter and flags)')
-    .argument('[input]', 'markdown file (to include its front matter)'),
+    .argument('[input]', 'markdown file (to include its front matter), or a folder (config shared by its pages)'),
 ).action((input, _opts, cmd) => {
   const load = loadOptions(cmd);
-  if (input) {
+  if (input && isDirectory(input)) {
+    const r = resolveConfig({ ...load, cwd: path.resolve(input) });
+    if (r.configFile) console.error(`# from ${r.configFile}`);
+    r.warnings.forEach((w) => console.error(`# warning: ${w}`));
+    console.log(yaml.dump(r.config));
+  } else if (input) {
     const doc = loadDocument(input, load);
     if (doc.configFile) console.error(`# from ${doc.configFile}`);
     doc.warnings.forEach((w) => console.error(`# warning: ${w}`));

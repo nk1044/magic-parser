@@ -24,8 +24,9 @@ mdp build <input...> [options]       (the default command, so `mdp file.md` work
   --set <key=value...>      any config key
 
 mdp serve <input> [-p 4321] [--host localhost] [--no-open] [same styling flags]
+                                      a file, or a folder previewed as a site
 mdp init [--format yaml|json] [--force]
-mdp config [input] [same flags]       print the resolved config
+mdp config [input] [same flags]       print the resolved config for a file or folder
 ```
 
 ## Any setting with `--set`

@@ -1,6 +1,6 @@
 {
   "name": "magic-parser",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Render Markdown into beautiful self-contained HTML or PDF on grid, lined or dotted paper. Math, code, diagrams, callouts and more.",
   "keywords": [
     "markdown",
@@ -39,9 +39,7 @@
   },
   "scripts": {
     "example": "node bin/mdp.js build examples/showcase.md -o examples/out/showcase.html",
-    "example:pdf": "node bin/mdp.js build examples/showcase.md -f pdf -o examples/out/showcase.pdf",
-    "example:site": "node bin/mdp.js build examples/docs -o examples/out/docs --title \"magic-parser docs\"",
-    "website:examples": "node bin/mdp.js build examples/showcase.md -o ../website/examples/showcase.html && node bin/mdp.js build examples/docs -o ../website/examples/docs --title \"magic-parser docs\""
+    "example:pdf": "node bin/mdp.js build examples/showcase.md -f pdf -o examples/out/showcase.pdf"
   },
   "dependencies": {
     "@vscode/markdown-it-katex": "^1.1.2",

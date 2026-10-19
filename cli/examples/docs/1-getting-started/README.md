@@ -26,6 +26,8 @@ npx mdp notes.md
 | Many files | `mdp docs/*.md -d dist` | one page per file in `dist/` |
 | A folder | `mdp docs/` | `docs-site/`, a multi-page site with a sidebar |
 
+There is no separate command for folders: give any command a path and magic-parser checks whether it is a file or a folder. `mdp serve` and `mdp config` work the same way.
+
 The next pages walk through each of these:
 
 1. [Single files](1-single-files.md)
