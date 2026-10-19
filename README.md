@@ -33,8 +33,9 @@ magic-parser/
 ├── cli/        the npm package (CLI + library); full docs in cli/README.md
 │   ├── bin/        command-line entry (magic-parser / mdp)
 │   ├── src/        config, markdown engine, theme, HTML/PDF rendering, dev server
-│   └── examples/   showcase.md, a sample config, and an image
-└── website/    the showcase site, a single static index.html
+│   └── examples/   showcase.md (every feature on one page), docs/ (an example
+│                   docs site, one page per feature), a sample config, an image
+└── website/    the showcase site: index.html, plus examples/ built from cli/examples
 ```
 
 ## Usage
@@ -67,10 +68,17 @@ cd cli
 npm install
 node bin/mdp.js examples/showcase.md --open          # build the showcase page
 node bin/mdp.js serve examples/showcase.md           # live preview while editing
+npm run example:site                                 # example docs site → examples/out/docs
 npm run example:pdf                                  # showcase as PDF
 ```
 
-The website has no build step: open `website/index.html` in a browser. It is hosted on GitHub Pages from the `gh-pages` branch. To deploy changes, commit them on `master`, then push the `website/` folder to that branch:
+The website is static: open `website/index.html` in a browser. Its live examples in `website/examples/` (the showcase page and the example docs site) are built from `cli/examples`. Rebuild them after changing the examples or the renderer:
+
+```bash
+cd cli && npm run website:examples
+```
+
+It is hosted on GitHub Pages from the `gh-pages` branch. To deploy changes, commit them on `master`, then push the `website/` folder to that branch:
 
 ```bash
 git subtree push --prefix website origin gh-pages

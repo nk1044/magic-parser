@@ -77,9 +77,9 @@ function renderTree(children, current) {
   const items = children.map((c) => {
     if (c.type === 'page') return `<li>${pageLink(c, current)}</li>`;
     // A folder holding only its own index page is just a link.
-    if (!c.children.length) return `<li>${pageLink(c.index, current, c.name)}</li>`;
+    if (!c.children.length) return `<li>${pageLink(c.index, current)}</li>`;
     const open = current.startsWith(`${c.rel}/`) ? ' open' : '';
-    const label = c.index ? pageLink(c.index, current, c.name) : `<span class="nav-label">${escapeHtml(c.name)}</span>`;
+    const label = c.index ? pageLink(c.index, current) : `<span class="nav-label">${escapeHtml(c.name)}</span>`;
     return `<li class="nav-dir"><details${open} data-key="${escapeHtml(c.rel)}"><summary>${label}</summary>${renderTree(c.children, current)}</details></li>`;
   });
   return `<ul>${items.join('')}</ul>`;
@@ -182,7 +182,7 @@ function landingMarkdown(tree, siteTitle) {
       const pad = '  '.repeat(depth);
       if (c.type === 'page') lines.push(`${pad}- [${esc(c.label)}](<${c.srcRel}>)`);
       else {
-        lines.push(`${pad}- ${c.index ? `[**${esc(c.name)}**](<${c.index.srcRel}>)` : `**${esc(c.name)}**`}`);
+        lines.push(`${pad}- ${c.index ? `[**${esc(c.index.label)}**](<${c.index.srcRel}>)` : `**${esc(c.name)}**`}`);
         walk(c.children, depth + 1);
       }
     }

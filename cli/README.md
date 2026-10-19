@@ -43,7 +43,7 @@ Everything in CommonMark + GFM, plus the common extensions:
 | Front matter | YAML `---` block (`title`, `description`, `lang`, `mdp:` overrides) |
 | Table of contents | `[[toc]]` anywhere, or `--toc` |
 
-See [examples/showcase.md](examples/showcase.md) for all of it on one page.
+See [examples/showcase.md](examples/showcase.md) for all of it on one page, or [examples/docs](examples/docs) for an example docs site with one page per feature, each showing the Markdown and its result. Build it with `npm run example:site`.
 
 ## Documentation sites
 
@@ -60,7 +60,7 @@ mdp docs/ -o public --title "Acme"  # choose the output folder and the site titl
 - Headings get ids, so `setup.html#requirements` links straight to a section.
 - Links between Markdown files, such as `[Setup](guide/setup.md#install)`, are rewritten to point at the generated pages.
 - Each page has previous / next links that follow the sidebar order.
-- Sidebar labels come from the front-matter `title`, otherwise from the file name. Entries are sorted naturally (`2-intro` before `10-advanced`), so numeric prefixes control the order.
+- Sidebar labels come from the front-matter `title`, otherwise from the file name. A folder takes the `title` of its index page, otherwise its own name. Entries are sorted naturally by file and folder name (`2-intro` before `10-advanced`), so numeric prefixes set the order and titles keep them out of the sidebar.
 - Hidden folders and `node_modules` are skipped. Every page has the sidebar baked in, so the site works when opened straight from disk and on any static host.
 
 Config files, front matter and flags work just as they do for single files. `--title` names the site, and each page keeps its own title. Sites are HTML only.

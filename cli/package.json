@@ -39,7 +39,9 @@
   },
   "scripts": {
     "example": "node bin/mdp.js build examples/showcase.md -o examples/out/showcase.html",
-    "example:pdf": "node bin/mdp.js build examples/showcase.md -f pdf -o examples/out/showcase.pdf"
+    "example:pdf": "node bin/mdp.js build examples/showcase.md -f pdf -o examples/out/showcase.pdf",
+    "example:site": "node bin/mdp.js build examples/docs -o examples/out/docs --title \"magic-parser docs\"",
+    "website:examples": "node bin/mdp.js build examples/showcase.md -o ../website/examples/showcase.html && node bin/mdp.js build examples/docs -o ../website/examples/docs --title \"magic-parser docs\""
   },
   "dependencies": {
     "@vscode/markdown-it-katex": "^1.1.2",

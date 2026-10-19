@@ -1,0 +1,4 @@
+# Shared by every page in this example site. Being the nearest config file, it
+# also keeps ../mdp.config.yaml (the dark notebook example) from applying here.
+page:
+  mode: auto       # follow the OS; the toggle button still switches
