@@ -6,6 +6,7 @@ Render Markdown into a single self-contained HTML page or a PDF, on paper you ca
 npx magic-parser notes.md                 # → notes.html (grid paper, cream page, serif)
 npx magic-parser notes.md -f pdf          # → notes.pdf
 npx magic-parser serve notes.md           # live-reloading preview in your browser
+npx magic-parser docs/                    # → docs-site/, a multi-page site with a sidebar
 ```
 
 ## Install
@@ -43,6 +44,26 @@ Everything in CommonMark + GFM, plus the common extensions:
 | Table of contents | `[[toc]]` anywhere, or `--toc` |
 
 See [examples/showcase.md](examples/showcase.md) for all of it on one page.
+
+## Documentation sites
+
+Pass a folder instead of a file to build a multi-page HTML site from every Markdown file inside it:
+
+```bash
+mdp docs/                          # → ./docs-site/index.html
+mdp docs/ -o public --title "Acme"  # choose the output folder and the site title
+```
+
+- Every `.md` / `.markdown` file becomes an `.html` page at the same relative path, so `docs/guide/setup.md` becomes `docs-site/guide/setup.html`.
+- In each folder, `index.md` (or `README.md` if there is no `index.md`) becomes that folder's `index.html`. If the root folder has neither, a home page that lists every page is generated.
+- Each page has a collapsible sidebar that mirrors the folder tree. Folders expand and collapse, the current page is highlighted, and the sidebar's open or closed state is remembered. On narrow screens it slides in over the page.
+- Headings get ids, so `setup.html#requirements` links straight to a section.
+- Links between Markdown files, such as `[Setup](guide/setup.md#install)`, are rewritten to point at the generated pages.
+- Each page has previous / next links that follow the sidebar order.
+- Sidebar labels come from the front-matter `title`, otherwise from the file name. Entries are sorted naturally (`2-intro` before `10-advanced`), so numeric prefixes control the order.
+- Hidden folders and `node_modules` are skipped. Every page has the sidebar baked in, so the site works when opened straight from disk and on any static host.
+
+Config files, front matter and flags work just as they do for single files. `--title` names the site, and each page keeps its own title. Sites are HTML only.
 
 ## Configuration
 
@@ -120,7 +141,8 @@ mdp:
 
 ```
 mdp build <input...> [options]       (the default command, so `mdp file.md` works)
-  -o, --output <file>       output file (one input)
+                            an input that is a folder builds a multi-page site
+  -o, --output <file>       output file (one input), or the site folder
   -d, --out-dir <dir>       output directory (several inputs)
   -f, --format <html|pdf>
   -c, --config <file>       --no-config to skip config files
@@ -144,7 +166,7 @@ mdp config [input] [same flags]       print the resolved config
 ## Library API
 
 ```js
-import { convertFile, renderToHtml } from 'magic-parser';
+import { convertFile, renderToHtml, buildSite } from 'magic-parser';
 
 // File → file (HTML or PDF), using the same config layers as the CLI
 const { output, warnings } = await convertFile('notes.md', {
@@ -156,6 +178,9 @@ const { output, warnings } = await convertFile('notes.md', {
 const { html, title } = renderToHtml('# Hello\n\nSome $E = mc^2$ math.', {
   config: { page: { style: 'dotted' } },
 });
+
+// Folder → multi-page site with a sidebar
+const site = buildSite('docs', { outDir: 'public', title: 'Acme docs' });
 ```
 
 `loadDocument`, `parseDocument`, `renderDocument`, `resolveConfig` and `DEFAULTS` are also exported for finer control.

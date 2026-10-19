@@ -54,7 +54,8 @@ function scan(dir, relDir, exclude, warnings) {
         continue;
       }
       used.add(out.toLowerCase());
-      const page = { type: 'page', src: abs, srcRel: rel, out, name: base };
+      // A folder's index page is named after the folder.
+      const page = { type: 'page', src: abs, srcRel: rel, out, name: abs === index ? node.name : base };
       if (abs === index) node.index = page;
       else node.children.push(page);
     }
@@ -222,7 +223,8 @@ export function buildSite(inputDir, { outDir, configPath = null, discover = true
 
   for (const page of pages) {
     page.doc = loadDocument(page.src, load);
-    page.label = page.doc.config.meta.title != null ? String(page.doc.config.meta.title) : page.name;
+    const fallback = page === tree.index ? siteTitle : page.name;
+    page.label = page.doc.config.meta.title != null ? String(page.doc.config.meta.title) : fallback;
   }
 
   let home = null;

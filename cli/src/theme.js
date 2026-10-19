@@ -526,6 +526,7 @@ body { padding-left: var(--sidebar-w); transition: padding-left .2s ease; }
 .nav-tree, .nav-tree ul { list-style: none; margin: 0; padding: 0; }
 .nav-tree ul { margin-left: 0.85em; padding-left: 0.4em; border-left: 1px solid var(--border); }
 .nav-tree li { margin: 1px 0; }
+.nav-tree details { margin: 0; }
 .nav-link, .nav-label {
   display: block;
   padding: 4px 10px;

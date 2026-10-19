@@ -6,6 +6,7 @@ Turn any Markdown file into a single self-contained web page or a print-ready PD
 npx magic-parser notes.md            # → notes.html
 npx magic-parser notes.md -f pdf     # → notes.pdf
 npx magic-parser serve notes.md      # live preview in the browser
+npx magic-parser docs/               # → docs-site/, a docs website with a sidebar
 ```
 
 **Website:** https://nk1044.github.io/magic-parser/
@@ -22,6 +23,7 @@ npx magic-parser serve notes.md      # live preview in the browser
 - **Styled pages.** Faint grid lines on a cream page with serif type by default. Switch to lined, dotted or plain paper, light, dark or auto mode, and your own fonts and colors.
 - **One portable file.** Images and math fonts are embedded, so the HTML works offline and can be emailed or hosted.
 - **PDFs that bleed to the edge.** The paper pattern covers every page, with page numbers. Uses the Chrome, Edge or Brave you already have, so there's no browser download.
+- **Docs sites from a folder.** Point it at a folder and get a multi-page site with a collapsible sidebar that mirrors the folder tree, linkable heading ids, and links between pages that just work.
 - **Configurable in layers.** Defaults, then a config file, then front matter, then CLI flags; each overrides the one before.
 
 ## Repository layout
@@ -43,6 +45,7 @@ Full option reference: **[cli/README.md](cli/README.md)**.
 npx magic-parser notes.md -s lined -m dark --toc     # style with flags
 npx magic-parser notes.md -c mdp.config.yaml         # or a config file
 npx magic-parser docs/*.md -d dist                   # many files at once
+npx magic-parser docs/ -o public --title "Acme"      # a whole folder as a docs site
 npx magic-parser init                                # write a config with all defaults
 ```
 
